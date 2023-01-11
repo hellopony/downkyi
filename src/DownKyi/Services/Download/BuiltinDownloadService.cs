@@ -134,15 +134,25 @@ namespace DownKyi.Services.Download
             }
 
             // 开始下载
-            var downloadStatus = DownloadByBuiltin(downloading, urls, path, fileName);
-            if (downloadStatus)
+            try
             {
-                downloading.Downloading.DownloadedFiles.Add(key);
-                downloading.Downloading.Gid = null;
-                return Path.Combine(path, fileName);
+                var downloadStatus = DownloadByBuiltin(downloading, urls, path, fileName);
+                if (downloadStatus)
+                {
+                    downloading.Downloading.DownloadedFiles.Add(key);
+                    downloading.Downloading.Gid = null;
+                    return Path.Combine(path, fileName);
+                }
+                else
+                {
+                    return nullMark;
+                }
             }
-            else
+            catch (FileNotFoundException e)
             {
+                Core.Utils.Debugging.Console.PrintLine("BuiltinDownloadService.DownloadVideo()发生异常: {0}", e);
+                LogManager.Error("BuiltinDownloadService.DownloadVideo()", e);
+
                 return nullMark;
             }
         }
@@ -291,7 +301,7 @@ namespace DownKyi.Services.Download
                 mtd.Configure(req =>
                 {
                     req.CookieContainer = LoginHelper.GetLoginInfoCookies();
-                    req.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36";
+                    req.UserAgent = SettingsManager.GetInstance().GetUserAgent();
                     req.Referer = "https://www.bilibili.com";
                     req.Headers.Add("Origin", "https://www.bilibili.com");
 
